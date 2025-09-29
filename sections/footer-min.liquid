@@ -1,0 +1,73 @@
+<footer class="footer-min">
+  <div class="footer-container">
+    <div class="footer-columns">
+      <div class="footer-column">
+        <h3 class="footer-heading">Products</h3>
+        <ul class="footer-links">
+          <li><a href="/collections/keyboards" class="footer-link">Keyboards</a></li>
+          <li><a href="/collections/accessories" class="footer-link">Accessories</a></li>
+          <li><a href="/collections/bundles" class="footer-link">Bundles</a></li>
+          <li><a href="/collections/all" class="footer-link">All Products</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-column">
+        <h3 class="footer-heading">Support</h3>
+        <ul class="footer-links">
+          <li><a href="/pages/support" class="footer-link">Help Center</a></li>
+          <li><a href="/pages/warranty" class="footer-link">Warranty</a></li>
+          <li><a href="/pages/contact" class="footer-link">Contact</a></li>
+          <li><a href="/search" class="footer-link">Search</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-column">
+        <h3 class="footer-heading">Company</h3>
+        <ul class="footer-links">
+          <li><a href="/pages/about" class="footer-link">About</a></li>
+          <li><a href="/pages/team" class="footer-link">Team</a></li>
+          <li><a href="/pages/press" class="footer-link">Press</a></li>
+          <li><a href="/pages/contact" class="footer-link">Contact</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-column">
+        <h3 class="footer-heading">Legal & Newsletter</h3>
+        <ul class="footer-links">
+          <li><a href="/policies/privacy-policy" class="footer-link">Privacy Policy</a></li>
+          <li><a href="/policies/terms-of-service" class="footer-link">Terms of Service</a></li>
+          <li><a href="/policies/refund-policy" class="footer-link">Refund Policy</a></li>
+        </ul>
+
+        <div class="footer-newsletter">
+          <form action="/contact#newsletter" method="post" class="newsletter-form">
+            <input type="hidden" name="form_type" value="customer">
+            <input type="hidden" name="utf8" value="✓">
+            <input type="email" name="contact[email]" placeholder="Enter your email" required class="newsletter-input">
+            <button type="submit" class="newsletter-submit">Subscribe</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p class="footer-copyright">
+        © {{ 'now' | date: '%Y' }} {{ shop.name }}. All rights reserved.
+      </p>
+    </div>
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "Footer Minimal",
+  "settings": [
+    {
+      "type": "text",
+      "id": "newsletter_heading",
+      "label": "Newsletter Heading",
+      "default": "Stay Updated"
+    }
+  ]
+}
+{% endschema %}

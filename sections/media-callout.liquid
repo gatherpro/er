@@ -1,0 +1,87 @@
+<section class="media-callout">
+  <div class="callout-container">
+    <div class="callout-content">
+      {% if section.settings.heading != blank %}
+        <h2 class="callout-heading">{{ section.settings.heading }}</h2>
+      {% endif %}
+
+      {% if section.settings.body != blank %}
+        <div class="callout-body">
+          {{ section.settings.body | newline_to_br }}
+        </div>
+      {% endif %}
+
+      {% if section.settings.button_label != blank and section.settings.button_link != blank %}
+        <div class="callout-actions">
+          <a href="{{ section.settings.button_link }}" class="btn btn-primary">
+            {{ section.settings.button_label }}
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if section.settings.image != blank %}
+      <div class="callout-media">
+        {{ section.settings.image | image_tag: section.settings.image.alt, loading: 'lazy', sizes: '(min-width: 900px) 50vw, 100vw' }}
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Media Callout",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Designed for Performance"
+    },
+    {
+      "type": "textarea",
+      "id": "body",
+      "label": "Body text",
+      "default": "Every product is meticulously crafted to enhance your workflow while reducing strain and fatigue."
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button Label",
+      "default": ""
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button Link",
+      "default": ""
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout",
+      "options": [
+        {
+          "value": "image_first",
+          "label": "Image first"
+        },
+        {
+          "value": "text_first",
+          "label": "Text first"
+        }
+      ],
+      "default": "text_first"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Media Callout"
+    }
+  ]
+}
+{% endschema %}

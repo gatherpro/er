@@ -1,0 +1,101 @@
+<section class="collection-grid-min">
+  <div class="grid-container">
+    {% paginate collection.products by section.settings.products_per_page %}
+
+      {% if section.settings.enable_filtering or section.settings.enable_sorting %}
+        <div class="collection-toolbar">
+          {% if section.settings.enable_filtering %}
+            <div class="collection-filters">
+              <!-- Filters implementation would go here -->
+            </div>
+          {% endif %}
+
+          {% if section.settings.enable_sorting %}
+            <div class="collection-sort">
+              <select class="sort-select">
+                <option value="manual">Featured</option>
+                <option value="best-selling">Best Selling</option>
+                <option value="title-ascending">A-Z</option>
+                <option value="title-descending">Z-A</option>
+                <option value="price-ascending">Price: Low to High</option>
+                <option value="price-descending">Price: High to Low</option>
+                <option value="created-ascending">Date: Old to New</option>
+                <option value="created-descending">Date: New to Old</option>
+              </select>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <div class="product-grid">
+        {% for product in collection.products %}
+          <div class="grid-item">
+            {% render 'card-product-min', product: product %}
+          </div>
+        {% else %}
+          <div class="grid-empty">
+            <p>No products found in this collection.</p>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if paginate.pages > 1 %}
+        <nav class="pagination">
+          {% if paginate.previous %}
+            <a href="{{ paginate.previous.url }}" class="pagination-link pagination-prev">
+              Previous
+            </a>
+          {% endif %}
+
+          {% for part in paginate.parts %}
+            {% if part.is_link %}
+              <a href="{{ part.url }}" class="pagination-link">{{ part.title }}</a>
+            {% else %}
+              {% if part.title == paginate.current_page %}
+                <span class="pagination-link pagination-current">{{ part.title }}</span>
+              {% else %}
+                <span class="pagination-divider">{{ part.title }}</span>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+
+          {% if paginate.next %}
+            <a href="{{ paginate.next.url }}" class="pagination-link pagination-next">
+              Next
+            </a>
+          {% endif %}
+        </nav>
+      {% endif %}
+
+    {% endpaginate %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Collection Grid Minimal",
+  "settings": [
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "min": 12,
+      "max": 48,
+      "step": 12,
+      "label": "Products per page",
+      "default": "24"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_filtering",
+      "label": "Enable filtering",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_sorting",
+      "label": "Enable sorting",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

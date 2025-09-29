@@ -1,0 +1,76 @@
+<section class="newsletter-compact">
+  <div class="newsletter-container">
+    <div class="newsletter-content">
+      <h2 class="newsletter-heading">{{ section.settings.heading }}</h2>
+      {% if section.settings.subheading != blank %}
+        <p class="newsletter-subheading">{{ section.settings.subheading }}</p>
+      {% endif %}
+    </div>
+
+    <form action="/contact#newsletter" method="post" class="newsletter-form">
+      <input type="hidden" name="form_type" value="customer">
+      <input type="hidden" name="utf8" value="✓">
+      <input type="hidden" name="contact[tags]" value="newsletter">
+
+      <div class="newsletter-input-group">
+        <input
+          type="email"
+          name="contact[email]"
+          placeholder="{{ section.settings.placeholder_text }}"
+          required
+          class="newsletter-input"
+        >
+        <button type="submit" class="newsletter-submit">
+          {{ section.settings.button_text }}
+        </button>
+      </div>
+    </form>
+
+    {% if section.settings.disclaimer != blank %}
+      <p class="newsletter-disclaimer">{{ section.settings.disclaimer }}</p>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Newsletter Compact",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Stay Updated"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Get the latest news and product updates delivered to your inbox."
+    },
+    {
+      "type": "text",
+      "id": "placeholder_text",
+      "label": "Placeholder Text",
+      "default": "Enter your email"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button Text",
+      "default": "Subscribe"
+    },
+    {
+      "type": "text",
+      "id": "disclaimer",
+      "label": "Disclaimer",
+      "default": "We respect your privacy and will never share your email."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Newsletter Compact"
+    }
+  ]
+}
+{% endschema %}

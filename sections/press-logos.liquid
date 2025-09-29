@@ -1,0 +1,91 @@
+<section class="press-logos">
+  <div class="press-container">
+    {% if section.settings.heading != blank %}
+      <h2 class="press-heading">{{ section.settings.heading }}</h2>
+    {% endif %}
+
+    <div class="logos-grid">
+      {% for block in section.blocks %}
+        {% case block.type %}
+          {% when 'logo' %}
+            <div class="logo-item" {{ block.shopify_attributes }}>
+              {% if block.settings.image != blank %}
+                {% if block.settings.link != blank %}
+                  <a href="{{ block.settings.link }}" class="logo-link" target="_blank" rel="noopener">
+                    {{ block.settings.image | image_tag: block.settings.alt, loading: 'lazy', width: 120, height: 60 }}
+                  </a>
+                {% else %}
+                  {{ block.settings.image | image_tag: block.settings.alt, loading: 'lazy', width: 120, height: 60 }}
+                {% endif %}
+              {% else %}
+                <div class="logo-placeholder">
+                  <svg width="120" height="60" viewBox="0 0 120 60" fill="none">
+                    <rect width="120" height="60" fill="#f5f5f7" rx="8"/>
+                    <text x="60" y="35" text-anchor="middle" fill="#d1d1d6" font-size="12">Logo</text>
+                  </svg>
+                </div>
+              {% endif %}
+            </div>
+        {% endcase %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Press Logos",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Featured In"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "logo",
+      "name": "Logo",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Logo Image"
+        },
+        {
+          "type": "text",
+          "id": "alt",
+          "label": "Alt Text",
+          "default": "Press Logo"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link",
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Press Logos",
+      "blocks": [
+        {
+          "type": "logo"
+        },
+        {
+          "type": "logo"
+        },
+        {
+          "type": "logo"
+        },
+        {
+          "type": "logo"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

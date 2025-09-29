@@ -1,0 +1,33 @@
+<div class="card-product-min">
+  <a href="{{ product.url }}" class="product-link">
+    <div class="product-image">
+      {% if product.featured_media != blank %}
+        {{ product.featured_media | image_tag: product.featured_media.alt, loading: 'lazy', sizes: '(min-width: 900px) 25vw, 50vw' }}
+      {% else %}
+        <div class="product-image-placeholder">
+          <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
+            <rect width="200" height="200" fill="#f5f5f7" rx="12"/>
+            <path d="M75 75h50v50h-50v-50z" fill="#d1d1d6"/>
+            <circle cx="90" cy="90" r="5" fill="#ffffff"/>
+          </svg>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="product-info">
+      <h3 class="product-title">{{ product.title }}</h3>
+
+      {% if product.vendor != blank %}
+        <p class="product-vendor">{{ product.vendor }}</p>
+      {% endif %}
+
+      <div class="product-price">
+        {% render 'price', product: product %}
+      </div>
+
+      {% unless product.available %}
+        <p class="product-status sold-out">Sold Out</p>
+      {% endunless %}
+    </div>
+  </a>
+</div>

@@ -1,0 +1,39 @@
+<div class="price">
+  {% if product.compare_at_price_max > product.price %}
+    <span class="price-item price-item--sale">
+      {% if product.price_varies %}
+        From {{ product.price_min | money }}
+      {% else %}
+        {{ product.price | money }}
+      {% endif %}
+    </span>
+    <s class="price-item price-item--regular">
+      {% if product.compare_at_price_varies %}
+        From {{ product.compare_at_price_min | money }}
+      {% else %}
+        {{ product.compare_at_price | money }}
+      {% endif %}
+    </s>
+  {% else %}
+    <span class="price-item price-item--regular">
+      {% if product.price_varies %}
+        From {{ product.price_min | money }}
+      {% else %}
+        {{ product.price | money }}
+      {% endif %}
+    </span>
+  {% endif %}
+
+  {% if product.selected_or_first_available_variant.unit_price_measurement %}
+    <div class="unit-price">
+      <span class="unit-price-amount">{{ product.selected_or_first_available_variant.unit_price | money }}</span>
+      <span class="unit-price-separator">/</span>
+      <span class="unit-price-measurement">
+        {%- if product.selected_or_first_available_variant.unit_price_measurement.reference_value != 1 -%}
+          {{ product.selected_or_first_available_variant.unit_price_measurement.reference_value }}
+        {%- endif -%}
+        {{ product.selected_or_first_available_variant.unit_price_measurement.reference_unit }}
+      </span>
+    </div>
+  {% endif %}
+</div>

@@ -1,0 +1,92 @@
+<section class="hero-split">
+  <div class="hero-container">
+    <div class="hero-content">
+      <h1 class="hero-heading">{{ section.settings.heading }}</h1>
+      {% if section.settings.subheading != blank %}
+        <p class="hero-subheading">{{ section.settings.subheading }}</p>
+      {% endif %}
+
+      <div class="hero-actions">
+        {% if section.settings.primary_label != blank and section.settings.primary_link != blank %}
+          <a href="{{ section.settings.primary_link }}" class="btn btn-primary">
+            {{ section.settings.primary_label }}
+          </a>
+        {% endif %}
+
+        {% if section.settings.secondary_label != blank and section.settings.secondary_link != blank %}
+          <a href="{{ section.settings.secondary_link }}" class="btn btn-secondary">
+            {{ section.settings.secondary_label }}
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="hero-media">
+      {% if section.settings.image != blank %}
+        {{ section.settings.image | image_tag: section.settings.image.alt, loading: 'eager', sizes: '(min-width: 900px) 50vw, 100vw' }}
+      {% else %}
+        <div class="hero-placeholder">
+          <svg width="400" height="300" viewBox="0 0 400 300" fill="none">
+            <rect width="400" height="300" fill="#f5f5f7"/>
+            <path d="M150 120h100v60h-100v-60z" fill="#d1d1d6"/>
+            <circle cx="180" cy="140" r="10" fill="#ffffff"/>
+          </svg>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Hero Split",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Premium Ergonomic Solutions"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Transform your workspace with award-winning products designed for ultimate comfort and productivity."
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "primary_label",
+      "label": "Primary Button Label",
+      "default": "Shop Now"
+    },
+    {
+      "type": "url",
+      "id": "primary_link",
+      "label": "Primary Button Link",
+      "default": "/collections/all"
+    },
+    {
+      "type": "text",
+      "id": "secondary_label",
+      "label": "Secondary Button Label",
+      "default": "Learn More"
+    },
+    {
+      "type": "url",
+      "id": "secondary_link",
+      "label": "Secondary Button Link",
+      "default": ""
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hero Split"
+    }
+  ]
+}
+{% endschema %}
