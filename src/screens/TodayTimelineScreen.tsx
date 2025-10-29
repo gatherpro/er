@@ -14,6 +14,7 @@ import { Task, DailyDial } from '../types';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { addNotificationResponseListener } from '../services/notifications';
+import { BranchChoiceModal } from '../components/BranchChoiceModal';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'TodayTimeline'>;
@@ -23,12 +24,14 @@ export function TodayTimelineScreen({ navigation }: Props) {
   const {
     currentPlan,
     isEmergencyStopped,
+    pendingBranchChoice,
     startTask,
     completeTask,
     skipTask,
     emergencyStop,
     resumeFromStop,
     updateDial,
+    makeBranchChoice,
   } = useDayStore();
 
   useEffect(() => {
@@ -236,6 +239,14 @@ export function TodayTimelineScreen({ navigation }: Props) {
         onPress={handleEmergencyStop}
         color="#fff"
       />
+
+      {/* 分岐選択モーダル */}
+      <BranchChoiceModal
+        visible={!!pendingBranchChoice}
+        options={pendingBranchChoice?.options || []}
+        onChoice={makeBranchChoice}
+        onDismiss={() => {}}
+      />
     </View>
   );
 }
@@ -260,6 +271,13 @@ function TaskCard({ task, index, isActive }: { task: Task; index: number; isActi
         <Text variant="titleMedium" style={styles.taskTitle}>
           {task.title}
         </Text>
+        {task.branch && (
+          <View style={styles.branchBadge}>
+            <Text variant="bodySmall" style={styles.branchText}>
+              🔀 分岐あり
+            </Text>
+          </View>
+        )}
         {task.estimatedMinutes && (
           <Text variant="bodySmall" style={styles.taskTime}>
             ⏱ {task.estimatedMinutes}分
@@ -451,6 +469,19 @@ const styles = StyleSheet.create({
   taskTitle: {
     fontWeight: '600',
     marginBottom: 4,
+  },
+  branchBadge: {
+    backgroundColor: '#e1f5fe',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  branchText: {
+    color: '#0277bd',
+    fontWeight: '600',
   },
   taskTime: {
     color: '#666',

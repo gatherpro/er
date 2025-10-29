@@ -122,12 +122,81 @@ function isTemplateLike(input: string, template: DayTemplate): boolean {
 }
 
 function convertTemplateToTasks(template: DayTemplate): Task[] {
-  return template.defaultTasks.map((t, index) =>
+  const tasks = template.defaultTasks.map((t, index) =>
     createTask({
       ...t,
       startTime: calculateStartTime(index, template.defaultTasks),
     })
   );
+
+  // 分岐テンプレートの特別処理
+  if (template.id === 'branch-example-time') {
+    // 時刻チェック分岐を追加
+    tasks[0].branch = {
+      condition: {
+        type: 'time_check',
+        time: new Date().setHours(12, 0, 0, 0).toString(),
+        label: '12時前なら長めランチ、以降なら短め',
+      },
+      onTrue: tasks[1].id, // ゆっくりランチ
+      onFalse: tasks[2].id, // 短めランチ
+    };
+    // 両方のランチタスクの後は午後の作業へ
+    tasks[1].branch = {
+      condition: { type: 'manual_choice', options: ['次へ'] },
+      onTrue: tasks[3].id,
+      onFalse: tasks[3].id,
+    };
+    tasks[2].branch = {
+      condition: { type: 'manual_choice', options: ['次へ'] },
+      onTrue: tasks[3].id,
+      onFalse: tasks[3].id,
+    };
+  }
+
+  if (template.id === 'branch-example-manual') {
+    // 手動選択分岐を追加
+    tasks[0].branch = {
+      condition: {
+        type: 'manual_choice',
+        options: ['外食する', '社食にする'],
+      },
+      onTrue: tasks[1].id, // 外食
+      onFalse: tasks[2].id, // 社食
+    };
+    // 両方のランチタスクの後は午後の作業へ
+    tasks[1].branch = {
+      condition: { type: 'manual_choice', options: ['次へ'] },
+      onTrue: tasks[3].id,
+      onFalse: tasks[3].id,
+    };
+    tasks[2].branch = {
+      condition: { type: 'manual_choice', options: ['次へ'] },
+      onTrue: tasks[3].id,
+      onFalse: tasks[3].id,
+    };
+  }
+
+  if (template.id === 'branch-example-completion') {
+    // 完了状態チェック分岐
+    tasks[2].branch = {
+      condition: {
+        type: 'completion_check',
+        taskId: tasks[1].id, // コードレビュー依頼の完了状態
+        label: 'レビューが完了したか',
+      },
+      onTrue: tasks[3].id, // リリース準備
+      onFalse: tasks[4].id, // 修正作業
+    };
+    // 修正作業後はリリース実行へ
+    tasks[4].branch = {
+      condition: { type: 'manual_choice', options: ['次へ'] },
+      onTrue: tasks[5].id,
+      onFalse: tasks[5].id,
+    };
+  }
+
+  return tasks;
 }
 
 function createTask(

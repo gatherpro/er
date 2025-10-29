@@ -168,4 +168,104 @@ export const dayTemplates: DayTemplate[] = [
       },
     ],
   },
+  {
+    id: 'branch-example-time',
+    name: '分岐例：時刻チェック',
+    description: '午前作業→昼に分岐（12時前なら長めランチ、以降なら短め）',
+    defaultTasks: [
+      {
+        title: '午前の作業',
+        estimatedMinutes: 120,
+        priority: 'desk',
+        // 分岐は後で追加（taskGenerator側で設定）
+      },
+      {
+        title: 'ゆっくりランチ',
+        estimatedMinutes: 90,
+        priority: 'desk',
+        description: '12時前に終わった場合',
+      },
+      {
+        title: '短めランチ',
+        estimatedMinutes: 45,
+        priority: 'desk',
+        description: '12時以降の場合',
+      },
+      {
+        title: '午後の作業',
+        estimatedMinutes: 120,
+        priority: 'desk',
+      },
+    ],
+  },
+  {
+    id: 'branch-example-manual',
+    name: '分岐例：手動選択',
+    description: '午前作業→昼に選択（外食 or 社食）',
+    defaultTasks: [
+      {
+        title: '午前の作業',
+        estimatedMinutes: 120,
+        priority: 'desk',
+        // 手動選択分岐
+      },
+      {
+        title: '外食ランチ＋移動',
+        estimatedMinutes: 90,
+        priority: 'travel',
+        description: '外食を選んだ場合',
+      },
+      {
+        title: '社食でランチ',
+        estimatedMinutes: 45,
+        priority: 'desk',
+        description: '社食を選んだ場合',
+      },
+      {
+        title: '午後の作業',
+        estimatedMinutes: 150,
+        priority: 'desk',
+      },
+    ],
+  },
+  {
+    id: 'branch-example-completion',
+    name: '分岐例：完了状態',
+    description: 'レビュー→完了ならリリース、未完なら修正',
+    defaultTasks: [
+      {
+        title: '機能開発',
+        estimatedMinutes: 120,
+        priority: 'desk',
+      },
+      {
+        title: 'コードレビュー依頼',
+        estimatedMinutes: 30,
+        priority: 'desk',
+      },
+      {
+        title: 'レビュー待機',
+        estimatedMinutes: 60,
+        priority: 'desk',
+        // 完了状態分岐
+      },
+      {
+        title: 'リリース準備',
+        estimatedMinutes: 45,
+        priority: 'desk',
+        description: 'レビューOKの場合',
+      },
+      {
+        title: '修正作業',
+        estimatedMinutes: 90,
+        priority: 'desk',
+        description: 'レビューで指摘があった場合',
+      },
+      {
+        title: 'リリース実行',
+        estimatedMinutes: 30,
+        priority: 'deadline',
+      },
+    ],
+  },
 ];

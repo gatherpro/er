@@ -14,7 +14,7 @@ type Props = {
 
 export function TaskDetailScreen({ navigation, route }: Props) {
   const { taskId } = route.params;
-  const { currentPlan, startTask, completeTask, skipTask } = useDayStore();
+  const { currentPlan, startTask, completeTask, skipTask, toggleChecklistItem } = useDayStore();
 
   const task = currentPlan?.tasks.find((t) => t.id === taskId);
 
@@ -99,10 +99,7 @@ export function TaskDetailScreen({ navigation, route }: Props) {
                   key={index}
                   item={item}
                   checked={task.checklistCompleted?.[index] ?? false}
-                  onToggle={() => {
-                    // チェックリストのトグル処理
-                    // TODO: ストアに追加
-                  }}
+                  onToggle={() => toggleChecklistItem(taskId, index)}
                 />
               ))}
             </View>

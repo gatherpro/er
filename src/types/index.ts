@@ -36,6 +36,9 @@ export interface Task {
   // Boss モードのチェックリスト
   checklist?: string[];
   checklistCompleted?: boolean[];
+
+  // スヌーズカウント
+  snoozeCount?: number;
 }
 
 // 今日の計画

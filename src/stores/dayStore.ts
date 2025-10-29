@@ -6,6 +6,7 @@ import { scheduleTaskNotifications, cancelAllNotifications } from '../services/n
 interface DayStore {
   currentPlan: DayPlan | null;
   isEmergencyStopped: boolean;
+  pendingBranchChoice: { taskId: string; options: string[] } | null;
 
   // Actions
   createDayPlan: (morningInput: string, dial: DailyDial, tasks: Task[]) => Promise<void>;
@@ -13,20 +14,27 @@ interface DayStore {
   startTask: (taskId: string) => Promise<void>;
   completeTask: (taskId: string) => Promise<void>;
   skipTask: (taskId: string) => Promise<void>;
-  transitionToNext: (currentTaskId: string) => Promise<void>;
+  transitionToNext: (currentTaskId: string, branchChoice?: number) => Promise<void>;
   emergencyStop: () => Promise<void>;
   resumeFromStop: () => Promise<void>;
   initializeNotifications: () => void;
   loadTodaysPlan: () => Promise<void>;
+  toggleChecklistItem: (taskId: string, index: number) => Promise<void>;
+  snoozeTask: (taskId: string) => Promise<void>;
+  makeBranchChoice: (choice: number) => Promise<void>;
 
   // Dial-aware logic
   canSnooze: (taskId: string) => boolean;
   getRemainingSnoozes: (taskId: string) => number;
+
+  // Branch evaluation
+  evaluateBranch: (task: Task, branchChoice?: number) => string | null;
 }
 
 export const useDayStore = create<DayStore>((set, get) => ({
   currentPlan: null,
   isEmergencyStopped: false,
+  pendingBranchChoice: null,
 
   createDayPlan: async (morningInput, dial, tasks) => {
     const newPlan: DayPlan = {
@@ -125,28 +133,63 @@ export const useDayStore = create<DayStore>((set, get) => ({
     await AsyncStorage.setItem('currentPlan', JSON.stringify(updatedPlan));
   },
 
-  transitionToNext: async (currentTaskId) => {
+  transitionToNext: async (currentTaskId, branchChoice) => {
     const { currentPlan } = get();
     if (!currentPlan) return;
 
     const currentTask = currentPlan.tasks.find(t => t.id === currentTaskId);
     if (!currentTask) return;
 
-    // 分岐チェック
+    // 分岐評価
+    const nextTaskId = get().evaluateBranch(currentTask, branchChoice);
+
+    if (nextTaskId) {
+      await get().startTask(nextTaskId);
+    } else {
+      // 全タスク完了
+      const updatedPlan = { ...currentPlan, currentTaskId: null, isActive: false };
+      set({ currentPlan: updatedPlan });
+      await AsyncStorage.setItem('currentPlan', JSON.stringify(updatedPlan));
+    }
+  },
+
+  evaluateBranch: (task, branchChoice) => {
+    const { currentPlan } = get();
+    if (!currentPlan) return null;
+
     let nextTaskId: string | null = null;
-    if (currentTask.branch) {
-      // 簡易分岐ロジック（時刻チェックなど）
-      const condition = currentTask.branch.condition;
+
+    if (task.branch) {
+      const condition = task.branch.condition;
+
       if (condition.type === 'time_check') {
+        // 時刻チェック分岐
         const now = new Date();
         const checkTime = new Date(condition.time);
-        nextTaskId = now < checkTime ? currentTask.branch.onTrue : currentTask.branch.onFalse;
-      } else {
-        // デフォルトは onTrue
-        nextTaskId = currentTask.branch.onTrue;
+        nextTaskId = now < checkTime ? task.branch.onTrue : task.branch.onFalse;
+      } else if (condition.type === 'completion_check') {
+        // 完了状態チェック分岐
+        const targetTask = currentPlan.tasks.find(t => t.id === condition.taskId);
+        if (targetTask) {
+          const isCompleted = targetTask.status === 'completed';
+          nextTaskId = isCompleted ? task.branch.onTrue : task.branch.onFalse;
+        } else {
+          nextTaskId = task.branch.onFalse;
+        }
+      } else if (condition.type === 'manual_choice') {
+        // 手動選択分岐
+        if (branchChoice !== undefined && condition.options[branchChoice]) {
+          // 選択肢に応じたタスクIDを取得
+          // 簡易実装: onTrueが選択肢0、onFalseが選択肢1
+          nextTaskId = branchChoice === 0 ? task.branch.onTrue : task.branch.onFalse;
+        } else {
+          // 選択待ち
+          set({ pendingBranchChoice: { taskId: task.id, options: condition.options } });
+          return null;
+        }
       }
     } else {
-      // 優先度順に次のタスクを探す
+      // 分岐なし：優先度順に次のタスクを探す
       const priorityOrder: Priority[] = ['deadline', 'travel', 'meeting', 'desk'];
       const pendingTasks = currentPlan.tasks.filter(t => t.status === 'pending');
 
@@ -159,14 +202,18 @@ export const useDayStore = create<DayStore>((set, get) => ({
       }
     }
 
-    if (nextTaskId) {
-      await get().startTask(nextTaskId);
-    } else {
-      // 全タスク完了
-      const updatedPlan = { ...currentPlan, currentTaskId: null, isActive: false };
-      set({ currentPlan: updatedPlan });
-      await AsyncStorage.setItem('currentPlan', JSON.stringify(updatedPlan));
-    }
+    return nextTaskId;
+  },
+
+  makeBranchChoice: async (choice) => {
+    const { pendingBranchChoice, currentPlan } = get();
+    if (!pendingBranchChoice || !currentPlan) return;
+
+    const taskId = pendingBranchChoice.taskId;
+    set({ pendingBranchChoice: null });
+
+    // 分岐選択を適用して遷移
+    await get().transitionToNext(taskId, choice);
   },
 
   emergencyStop: async () => {
@@ -183,29 +230,78 @@ export const useDayStore = create<DayStore>((set, get) => ({
     }
   },
 
+  toggleChecklistItem: async (taskId, index) => {
+    const { currentPlan } = get();
+    if (!currentPlan) return;
+
+    const updatedTasks = currentPlan.tasks.map(task => {
+      if (task.id === taskId && task.checklist) {
+        const checklistCompleted = task.checklistCompleted || new Array(task.checklist.length).fill(false);
+        checklistCompleted[index] = !checklistCompleted[index];
+        return { ...task, checklistCompleted };
+      }
+      return task;
+    });
+
+    const updatedPlan = { ...currentPlan, tasks: updatedTasks };
+    set({ currentPlan: updatedPlan });
+    await AsyncStorage.setItem('currentPlan', JSON.stringify(updatedPlan));
+  },
+
+  snoozeTask: async (taskId) => {
+    const { currentPlan } = get();
+    if (!currentPlan || !get().canSnooze(taskId)) return;
+
+    const task = currentPlan.tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const snoozeCount = (task.snoozeCount || 0) + 1;
+    const maxSnoozes = currentPlan.dial === 'gentle' ? 2 : 1;
+
+    if (snoozeCount > maxSnoozes) return;
+
+    const updatedTasks = currentPlan.tasks.map(t =>
+      t.id === taskId ? { ...t, snoozeCount } : t
+    );
+
+    const updatedPlan = { ...currentPlan, tasks: updatedTasks };
+    set({ currentPlan: updatedPlan });
+    await AsyncStorage.setItem('currentPlan', JSON.stringify(updatedPlan));
+
+    // 5分後に再通知（簡易実装）
+    // 実装は notifications.ts で行う
+  },
+
   canSnooze: (taskId) => {
     const { currentPlan } = get();
     if (!currentPlan) return false;
 
-    const dial = currentPlan.dial;
-    // ここでスヌーズカウントを管理（簡易版）
-    if (dial === 'boss') return false;
-    if (dial === 'coach') return true; // 1回まで（要実装）
-    if (dial === 'gentle') return true; // 2回まで（要実装）
+    const task = currentPlan.tasks.find(t => t.id === taskId);
+    if (!task) return false;
 
-    return false;
+    const dial = currentPlan.dial;
+    if (dial === 'boss') return false;
+
+    const snoozeCount = task.snoozeCount || 0;
+    const maxSnoozes = dial === 'gentle' ? 2 : 1;
+
+    return snoozeCount < maxSnoozes;
   },
 
   getRemainingSnoozes: (taskId) => {
     const { currentPlan } = get();
     if (!currentPlan) return 0;
 
+    const task = currentPlan.tasks.find(t => t.id === taskId);
+    if (!task) return 0;
+
     const dial = currentPlan.dial;
     if (dial === 'boss') return 0;
-    if (dial === 'coach') return 1;
-    if (dial === 'gentle') return 2;
 
-    return 0;
+    const snoozeCount = task.snoozeCount || 0;
+    const maxSnoozes = dial === 'gentle' ? 2 : 1;
+
+    return Math.max(0, maxSnoozes - snoozeCount);
   },
 
   initializeNotifications: () => {
