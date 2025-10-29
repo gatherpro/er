@@ -12,7 +12,6 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { useDayStore } from '../stores/dayStore';
 import { Task, DailyDial } from '../types';
 import { format } from 'date-fns';
-import { ja } from 'date-fns/locale';
 import { addNotificationResponseListener } from '../services/notifications';
 import { BranchChoiceModal } from '../components/BranchChoiceModal';
 
