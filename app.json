@@ -4,7 +4,6 @@
     "slug": "day-autopilot",
     "owner": "keirai0523",
     "version": "1.0.0",
-    "sdkVersion": "50.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "splash": {
