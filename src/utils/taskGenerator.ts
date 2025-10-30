@@ -1,4 +1,4 @@
-import { Task, Priority } from '../types';
+import { Task, Priority, DayTemplate } from '../types';
 import { dayTemplates } from './templates';
 
 /**
@@ -122,7 +122,7 @@ function isTemplateLike(input: string, template: DayTemplate): boolean {
 }
 
 function convertTemplateToTasks(template: DayTemplate): Task[] {
-  const tasks = template.defaultTasks.map((t, index) =>
+  const tasks = template.defaultTasks.map((t: Omit<Task, 'id' | 'status'>, index: number) =>
     createTask({
       ...t,
       startTime: calculateStartTime(index, template.defaultTasks),

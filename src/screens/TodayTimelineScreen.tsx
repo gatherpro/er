@@ -10,7 +10,7 @@ import { Text, Card, Button, FAB, Chip, ProgressBar } from 'react-native-paper';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useDayStore } from '../stores/dayStore';
-import { Task, DailyDial } from '../types';
+import { Task, DailyDial, Priority } from '../types';
 import { format } from 'date-fns';
 import { addNotificationResponseListener } from '../services/notifications';
 import { BranchChoiceModal } from '../components/BranchChoiceModal';
@@ -118,6 +118,17 @@ export function TodayTimelineScreen({ navigation }: Props) {
   ).length;
   const progress = completedCount / currentPlan.tasks.length;
 
+  // 分岐先のタスクを取得する関数
+  const getBranchTasks = (taskId: string): Task[] | undefined => {
+    const task = currentPlan.tasks.find(t => t.id === taskId);
+    if (!task?.branch) return undefined;
+
+    const trueTask = currentPlan.tasks.find(t => t.id === task.branch?.onTrue);
+    const falseTask = currentPlan.tasks.find(t => t.id === task.branch?.onFalse);
+
+    return [trueTask, falseTask].filter((t): t is Task => t !== undefined);
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -221,6 +232,7 @@ export function TodayTimelineScreen({ navigation }: Props) {
                 task={task}
                 index={index}
                 isActive={task.id === currentPlan.currentTaskId}
+                allTasks={currentPlan.tasks}
               />
             </TouchableOpacity>
           ))}
@@ -243,6 +255,7 @@ export function TodayTimelineScreen({ navigation }: Props) {
       <BranchChoiceModal
         visible={!!pendingBranchChoice}
         options={pendingBranchChoice?.options || []}
+        tasks={pendingBranchChoice ? getBranchTasks(pendingBranchChoice.taskId) : undefined}
         onChoice={makeBranchChoice}
         onDismiss={() => {}}
       />
@@ -250,7 +263,28 @@ export function TodayTimelineScreen({ navigation }: Props) {
   );
 }
 
-function TaskCard({ task, index, isActive }: { task: Task; index: number; isActive: boolean }) {
+function TaskCard({ task, index, isActive, allTasks }: { task: Task; index: number; isActive: boolean; allTasks: Task[] }) {
+  // 分岐先のタスクを取得
+  const getTrueTask = () => task.branch ? allTasks.find(t => t.id === task.branch!.onTrue) : null;
+  const getFalseTask = () => task.branch ? allTasks.find(t => t.id === task.branch!.onFalse) : null;
+
+  // 分岐条件の説明を生成
+  const getBranchDescription = () => {
+    if (!task.branch) return null;
+
+    const { condition } = task.branch;
+    switch (condition.type) {
+      case 'time_check':
+        return `⏰ ${condition.time} で自動分岐`;
+      case 'completion_check':
+        return `✅ タスク完了状態で分岐`;
+      case 'manual_choice':
+        return `👆 手動選択`;
+      default:
+        return '🔀 分岐あり';
+    }
+  };
+
   return (
     <Card
       style={[
@@ -270,13 +304,6 @@ function TaskCard({ task, index, isActive }: { task: Task; index: number; isActi
         <Text variant="titleMedium" style={styles.taskTitle}>
           {task.title}
         </Text>
-        {task.branch && (
-          <View style={styles.branchBadge}>
-            <Text variant="bodySmall" style={styles.branchText}>
-              🔀 分岐あり
-            </Text>
-          </View>
-        )}
         {task.estimatedMinutes && (
           <Text variant="bodySmall" style={styles.taskTime}>
             ⏱ {task.estimatedMinutes}分
@@ -286,6 +313,79 @@ function TaskCard({ task, index, isActive }: { task: Task; index: number; isActi
           <Text variant="bodySmall" style={styles.taskDeadline}>
             🚨 {format(new Date(task.deadline), 'HH:mm')}まで
           </Text>
+        )}
+
+        {/* 分岐の詳細表示 */}
+        {task.branch && (
+          <View style={styles.branchContainer}>
+            <View style={styles.branchHeader}>
+              <Text variant="bodySmall" style={styles.branchDescription}>
+                {getBranchDescription()}
+              </Text>
+            </View>
+            <View style={styles.branchPaths}>
+              {/* True パス */}
+              <View style={styles.branchPath}>
+                <View style={styles.branchPathHeader}>
+                  <Text style={styles.branchPathIcon}>✓</Text>
+                  <Text variant="labelSmall" style={styles.branchPathLabel}>
+                    {task.branch.condition.type === 'time_check'
+                      ? `${task.branch.condition.time}前`
+                      : task.branch.condition.type === 'completion_check'
+                      ? '完了済み'
+                      : task.branch.condition.type === 'manual_choice'
+                      ? task.branch.condition.options[0]
+                      : 'Yes'}
+                  </Text>
+                </View>
+                <View style={styles.branchArrow}>
+                  <Text style={styles.branchArrowText}>↓</Text>
+                </View>
+                <View style={styles.branchTaskPreview}>
+                  <Text variant="bodySmall" style={styles.branchTaskTitle} numberOfLines={1}>
+                    {getTrueTask()?.title || '次のタスク'}
+                  </Text>
+                  {getTrueTask()?.estimatedMinutes && (
+                    <Text variant="labelSmall" style={styles.branchTaskTime}>
+                      {getTrueTask()?.estimatedMinutes}分
+                    </Text>
+                  )}
+                </View>
+              </View>
+
+              {/* 区切り線 */}
+              <View style={styles.branchDivider} />
+
+              {/* False パス */}
+              <View style={styles.branchPath}>
+                <View style={styles.branchPathHeader}>
+                  <Text style={styles.branchPathIcon}>✗</Text>
+                  <Text variant="labelSmall" style={styles.branchPathLabel}>
+                    {task.branch.condition.type === 'time_check'
+                      ? `${task.branch.condition.time}以降`
+                      : task.branch.condition.type === 'completion_check'
+                      ? '未完了'
+                      : task.branch.condition.type === 'manual_choice'
+                      ? task.branch.condition.options[1]
+                      : 'No'}
+                  </Text>
+                </View>
+                <View style={styles.branchArrow}>
+                  <Text style={styles.branchArrowText}>↓</Text>
+                </View>
+                <View style={styles.branchTaskPreview}>
+                  <Text variant="bodySmall" style={styles.branchTaskTitle} numberOfLines={1}>
+                    {getFalseTask()?.title || '代替タスク'}
+                  </Text>
+                  {getFalseTask()?.estimatedMinutes && (
+                    <Text variant="labelSmall" style={styles.branchTaskTime}>
+                      {getFalseTask()?.estimatedMinutes}分
+                    </Text>
+                  )}
+                </View>
+              </View>
+            </View>
+          </View>
         )}
       </Card.Content>
     </Card>
@@ -469,18 +569,80 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 4,
   },
-  branchBadge: {
-    backgroundColor: '#e1f5fe',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    alignSelf: 'flex-start',
-    marginTop: 4,
+  branchContainer: {
+    backgroundColor: '#f0f9ff',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#bae6fd',
+  },
+  branchHeader: {
+    marginBottom: 12,
+  },
+  branchDescription: {
+    color: '#0369a1',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  branchPaths: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  branchPath: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#e0f2fe',
+  },
+  branchPathHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     marginBottom: 4,
   },
-  branchText: {
-    color: '#0277bd',
+  branchPathIcon: {
+    fontSize: 16,
+    width: 20,
+    textAlign: 'center',
+  },
+  branchPathLabel: {
+    color: '#0369a1',
     fontWeight: '600',
+    fontSize: 11,
+    flex: 1,
+  },
+  branchArrow: {
+    alignItems: 'center',
+    marginVertical: 2,
+  },
+  branchArrowText: {
+    fontSize: 16,
+    color: '#64748b',
+  },
+  branchTaskPreview: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 4,
+    padding: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#38bdf8',
+  },
+  branchTaskTitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#1e293b',
+    marginBottom: 2,
+  },
+  branchTaskTime: {
+    fontSize: 10,
+    color: '#64748b',
+  },
+  branchDivider: {
+    width: 1,
+    backgroundColor: '#cbd5e1',
+    marginHorizontal: 4,
   },
   taskTime: {
     color: '#666',

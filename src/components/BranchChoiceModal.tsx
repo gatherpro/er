@@ -1,15 +1,17 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Portal, Modal, Card, Button, Text } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Portal, Modal, Card, Button, Text, Divider } from 'react-native-paper';
+import { Task } from '../types';
 
 interface Props {
   visible: boolean;
   options: string[];
+  tasks?: Task[]; // 分岐先のタスク情報（オプション）
   onChoice: (choiceIndex: number) => void;
   onDismiss: () => void;
 }
 
-export function BranchChoiceModal({ visible, options, onChoice, onDismiss }: Props) {
+export function BranchChoiceModal({ visible, options, tasks, onChoice, onDismiss }: Props) {
   return (
     <Portal>
       <Modal
@@ -27,20 +29,48 @@ export function BranchChoiceModal({ visible, options, onChoice, onDismiss }: Pro
             </Text>
 
             <View style={styles.optionsContainer}>
-              {options.map((option, index) => (
-                <Button
-                  key={index}
-                  mode="contained"
-                  onPress={() => {
-                    onChoice(index);
-                    onDismiss();
-                  }}
-                  style={styles.optionButton}
-                  contentStyle={styles.optionButtonContent}
-                >
-                  {option}
-                </Button>
-              ))}
+              {options.map((option, index) => {
+                const task = tasks?.[index];
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => {
+                      onChoice(index);
+                    }}
+                    style={styles.optionCard}
+                  >
+                    <View style={styles.optionHeader}>
+                      <Text variant="labelLarge" style={styles.optionLabel}>
+                        {option}
+                      </Text>
+                      {task?.estimatedMinutes && (
+                        <View style={styles.timeBadge}>
+                          <Text variant="labelSmall" style={styles.timeText}>
+                            ⏱ {task.estimatedMinutes}分
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    {task && (
+                      <>
+                        <Text variant="titleMedium" style={styles.taskTitle}>
+                          {task.title}
+                        </Text>
+                        {task.description && (
+                          <Text variant="bodySmall" style={styles.taskDescription} numberOfLines={2}>
+                            {task.description}
+                          </Text>
+                        )}
+                      </>
+                    )}
+                    <View style={styles.selectButton}>
+                      <Text variant="labelMedium" style={styles.selectButtonText}>
+                        このルートを選ぶ →
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </Card.Content>
         </Card>
@@ -64,12 +94,54 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   optionsContainer: {
-    gap: 12,
+    gap: 16,
   },
-  optionButton: {
+  optionCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: '#38bdf8',
+  },
+  optionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  optionLabel: {
+    color: '#0369a1',
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  timeBadge: {
+    backgroundColor: '#e0f2fe',
+    paddingHorizontal: 8,
     paddingVertical: 4,
+    borderRadius: 6,
   },
-  optionButtonContent: {
-    paddingVertical: 12,
+  timeText: {
+    color: '#0369a1',
+    fontWeight: '600',
+  },
+  taskTitle: {
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 4,
+  },
+  taskDescription: {
+    color: '#64748b',
+    marginBottom: 12,
+  },
+  selectButton: {
+    backgroundColor: '#38bdf8',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  selectButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
