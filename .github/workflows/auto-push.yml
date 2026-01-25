@@ -1,0 +1,28 @@
+name: Auto Empty Push
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  empty-push:
+    runs-on: ubuntu-latest
+    # gatherpro 以外がプッシュした場合のみ実行
+    if: github.actor != 'gatherpro'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "gatherpro"
+          git config user.email "keirai0523@gmail.com"
+
+      - name: Empty commit and push
+        run: |
+          git commit --allow-empty -m "Auto sync"
+          git push
